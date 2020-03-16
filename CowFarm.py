@@ -15,11 +15,11 @@ showinfo(title="Introduction", message="Dairy Farm Game!\n\nYour goal is to earn
     There are much chances that your cow will die after 8 years.")
 
 # change these if you are unsatisfied with the economy.
-money=1000000 # Starting money
+money=100000 # Starting money
 milkPrice=50
 grassPriceRainy=300
 grassPriceSunny=400
-rainyMonths=(4,5,6,7,8) # Months in which rains
+rainyMonths=(4,5,6,7,8) # Months in which it rains
 rainProbability=1/3
 cowsInMarket=6 # Amount of cows on sale in the market
 # milk of a cow changes with age.

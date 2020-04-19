@@ -4,6 +4,8 @@ import tkinter as tk
 from tkinter.messagebox import *
 from random import randint,choice
 
+testing = False
+
 window=tk.Tk()
 # Introduction to the game.
 
@@ -245,6 +247,13 @@ def GoToMarket():
             i.pack(side='right', anchor='center')
             i['style']='my.TButton'
     InsideMarket()
+    if testing:
+        for _ in range(cowsInMarket):
+            BuyCow() # buy every animal for testing ShowAnimals() function
+            Increasenum()
+        BuyCow() 
+        Decreasenum()
+        Exit()
 
 def ShowAnimals():
     i=0
@@ -353,7 +362,14 @@ def ShowAnimals():
             j.pack(side='right', anchor='center')
             j['style']='my.TButton'
     ShowAnimal()
-
+    if testing:
+        Increasenum()
+        Decreasenum()
+        Slay()
+        Sell()
+        Mate()
+        Exit()
+    
 buttonsFrame = ttk.Frame(window)
 buttonsFrame.pack(side='left',anchor='n',before=label)
 
@@ -365,5 +381,10 @@ ttk.Button(buttonsFrame, text="Next Month", command = MonthlyCycle, style = 'my.
     ).pack(side='top', anchor='w', pady=10, padx=20)
 ttk.Button(buttonsFrame,text="Quit", command = window.destroy, style = 'my.TButton'
     ).pack(side='top', anchor='w', pady=10, padx=20)
+
+if testing:
+    GoToMarket()
+    ShowAnimals()
+    MonthlyCycle()
 
 window.mainloop()

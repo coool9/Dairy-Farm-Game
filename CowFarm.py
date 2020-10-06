@@ -370,6 +370,15 @@ def ShowAnimals():
         Mate()
         Exit()
     
+def ChangeTheme():
+    themes=s.theme_names()
+    current_theme=themes.index(s.theme_use())
+    current_theme=themes[current_theme+1 if current_theme != len(themes)-1 else 0]
+    s.theme_settings(current_theme,
+                settings={'TButton': {'configure': {'font': ('Helvetica', 12)}},
+                          'TLabel': {'configure': {'font': ('Helvetica', 12)}}})
+    s.theme_use(current_theme)
+    
 buttonsFrame = ttk.Frame(window)
 buttonsFrame.pack(side='left',anchor='n',before=label)
 
@@ -378,6 +387,8 @@ ttk.Button(buttonsFrame, text="Go to the market", command = GoToMarket, style = 
 ttk.Button(buttonsFrame, text="Show animals", command = ShowAnimals, style = 'my.TButton'
     ).pack(side='top', anchor='w', pady=10, padx=20)
 ttk.Button(buttonsFrame, text="Next Month", command = MonthlyCycle, style = 'my.TButton'
+    ).pack(side='top', anchor='w', pady=10, padx=20)
+ttk.Button(buttonsFrame, text="Change Theme", command = ChangeTheme, style = 'my.TButton'
     ).pack(side='top', anchor='w', pady=10, padx=20)
 ttk.Button(buttonsFrame,text="Quit", command = window.destroy, style = 'my.TButton'
     ).pack(side='top', anchor='w', pady=10, padx=20)

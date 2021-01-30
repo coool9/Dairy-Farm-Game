@@ -11,7 +11,7 @@ testing = False
 window=tk.Tk()
 
 # Introduction to the game.
-if testing == False:
+if not testing:
     showinfo(title="Introduction", message="Dairy Farm Game!\n\n\
         Your goal is to earn money by selling milk\n\
         This paragraph will inform you about milk production in this game.\n\
@@ -23,27 +23,35 @@ if testing == False:
         There are much chances that your cow will die after 8 years.")
 
 # change these if you are unsatisfied with the economy.
-money=100000 # Starting money
-milkPrice=100
-grassPriceRainy=300
-grassPriceSunny=400
-rainyMonths=(4,5,6,7,8) # Months in which rains
-rainProbability=1/3
-cowsInMarket=7 # Amount of cows on sale in the market
+windowTitle = 'Dairy Farm'
+windowGeometry = '800x400'
+money=100000              # Starting money
+milkPrice = 100
+grassPrice = {'Rainy': 300,
+              'Sunny': 400,
+              'Snowy': 450}
+rainyMonths = (4,5,6,7,8) # Months in which rains
+snowyMonths = (11,12,1,2) # Months in which snows
+rainProbability = 1/3
+animalsInMarket=7            # Amount of animals availible in the market
+
+
 # milk of a cow changes with age.
 # key is age. value is milk
-ageMilkRelation={1:10,2:11,3:randint(11,13) ,4:randint(12,15) ,5:12 ,6:randint(10,11), 7:randint(9,10)}
+ageMilkRelation={1:10, 2:11, 3:randint(11,13), 4:randint(12,15),
+                 5:12, 6:randint(10,11), 7:randint(9,10)}
 # change these if you don't follow English months.
-monthNames=('', 'January','February','March','April','May','June','July','August','September','October','November','December')
+monthNames=('',
+            'January','February','March','April',
+            'May','June','July','August',
+            'September','October','November','December')
 # change these if you don't follow the solar calendar.
 monthDays=(0,31,28,31,30,31,30,31,31,30,31,30,31)
-
+# starting date
 current_date=date(1900, 1, 1)
-profit=0
-milk=0 
 
-window.title('Dairy Farm')
-window.geometry('800x400')
+window.title(windowTitle)
+window.geometry(windowGeometry)
 
 class Animal():
     def __init__(self,
@@ -52,7 +60,8 @@ class Animal():
                 meat: int,
                 milk: int=0,
                 ispregnant: bool=False, 
-                prgDate: date = date(1900, 1, 1)):
+                prgDate: date = date(1900, 1, 1),
+                lastCalfBornOn: date = current_date):
         if not gender in ('male', 'female'):
             raise 'gender can only be male or female'
         self.birthDay = birthDay
@@ -65,6 +74,7 @@ class Animal():
         if gender == 'female':
             self.ispregnant = ispregnant
             self.prgDate = prgDate
+            self.lastCalfBornOn = lastCalfBornOn
             
     def MonthlyCycle(self):
         if [self.age[0], self.age[1]] < [1,4]:
@@ -93,19 +103,25 @@ class Animal():
                 Gender=choice(['female','male'])
                 Animal(current_date, Gender, 5)
                 showinfo(message=f'A {Gender} calf is born!')
+                
+        if self.lastCalfBornOn != date(1800, 1, 1) and\
+            ( current_date - self.lastCalfBornOn > timedelta(7*30) or
+            ( current_date - self.lastCalfBornOn > timedelta(5*30) and self.ispregnant)):
+            if self.milk > 0:
+                self.milk -= 2 if (randint(1,3) == 3 and self.milk != 1) else 1
 
     def getSalePrice(self):
         price=0
         if self.gender == 'female':
             agePriceRelation = {7:35000, 1:70000, 6:54000, 2:65000, 3:60000, 4:57000, 5:50000}
-            #meatMilkRelation={10:15,9:14,8:13,7:12,6:11,5:10,4:9,3:8,2:7,1:6}
+            #meatMilkRelation={10:15,9:14,8:13,7:12,6:,5:10,4:9,3:8,2:7,1:6}
             price=agePriceRelation[self.age[0]]+\
                 self.milk*1000+\
                 self.meat*2000
             if self.ispregnant:
                 price+=10000
         else:
-            price = self.meat*3000
+            price = self.meat*7000
         
         return price
 
@@ -124,6 +140,8 @@ class Animal():
             animalDict['IsPregnant'] = self.ispregnant
             if self.ispregnant:
                 animalDict['Pregnant Date'] = str(self.prgDate)
+            if self.lastCalfBornOn != date(1800, 1, 1):
+                animalDict['Last Calf'] = str(self.lastCalfBornOn)
         Text=''
         spacing = 20
         
@@ -132,7 +150,7 @@ class Animal():
         return Text
         
 def getGrassPrice(weather):
-    return grassPriceSunny if weather == "sunny" else grassPriceRainy
+    return grassPrice[weather]
 
 # Doesn't work
 def getFoodRequirement(meat):
@@ -165,21 +183,39 @@ class Farm:
         
 farm=Farm()
 
-def MonthlyCycle(): #Main game window update
-    global current_date, money, profit, milk
+def MonthlyCycle():  #Main game window update
+    global current_date, money
 
-    weather='sunny'
-    if current_date.month in rainyMonths: #monsoon
-        weather='rainy' if randint(1,3) == 2 else 'sunny'
+    if money < -40000:
+        showerror(message='You have gone bankrupt :(\n\
+                Better Luck Next Time')
+        window.destroy()
+
+    weather='Sunny'
+    if current_date.month in rainyMonths:  #monsoon
+        weather='Rainy' if randint(1,3) == 2 else 'Sunny'
+    elif current_date.month in snowyMonths:
+        weather='Snowy' if randint(1, 3) == 2 else 'Sunny'
+        
     cows, bulls, calves = (0,0,0)
-    for i in farm.get_all_animals():
-        if current_date < (i.birthDay + timedelta(9*30)):
+    milk=0
+    for animal in farm.get_all_animals():
+        if current_date < (animal.birthDay + timedelta(7*30)):
             calves+=1
             
-        if i.gender == 'male':
+        if animal.gender == 'male':
             bulls+=1
         else:
             cows+=1
+
+        animal.MonthlyCycle()
+        milk+=animal.milk
+        
+    grass=getGrassPrice(weather)*monthDays[current_date.month]*( cows+bulls )
+    #Total profit = Income-Maintanence
+    profit=(milk*milkPrice*monthDays[current_date.month])-grass
+    money+=profit
+
     label['text']=("Money : "+str(money)+
         "\nProfit : "+str(profit)+
         "\nCows :  "+str(cows)+
@@ -193,25 +229,19 @@ def MonthlyCycle(): #Main game window update
     #destroy buttons created from previous interactions
     for i in buttonsFrame2.pack_slaves():
         i.destroy()
-    
-    milk=0
-    grass=getGrassPrice(weather)*monthDays[current_date.month]*( cows+bulls )
-    for i in farm.get_all_animals():
-        i.MonthlyCycle()
-    profit=(milk*50*monthDays[current_date.month])-grass #Total profit = Income-Maintanence
-    money+=profit 
+        
     current_date+=timedelta(days=monthDays[current_date.month])
     
 MonthlyCycle()
 
 def GoToMarket():
     marketInfo=[]
-    num=0 #number of animal being viewed
+    num=0  #number of animal being viewed
     buttons = buttonsFrame2.pack_slaves()
     for i in buttons:
         i.destroy()
     global money
-    for i in range(cowsInMarket):
+    for i in range(animalsInMarket):
         age=randint(1,7)
         meat=randint(1,10)
         gender=choice(['female','male'])
@@ -227,6 +257,7 @@ def GoToMarket():
                 current_date.replace(current_date.year-age),
                 gender,
                 meat))
+            
     spacing=30
     buttons=[]
     def BuyCow():
@@ -242,36 +273,47 @@ def GoToMarket():
                 return
             num=num-1 if num else 0
             InsideMarket()
+            
     def InsideMarket():
-        label.configure(text=marketInfo[num].getForShowing())
+        label['text']=marketInfo[num].getForShowing()
+        
     def Decreasenum():
         nonlocal num
         num=num-1 if num else len(marketInfo)-1
         InsideMarket()
+        
     def Increasenum():
         nonlocal num
         num=num+1 if not num==len(marketInfo)-1 else 0
         InsideMarket()
+        
     def Exit():
         for i in buttons:
             i.destroy()
         label.destroy
         MonthlyCycle()
-    if buttons==[]:
+        
+    def createGUI():
         buttonsFrame3=ttk.Frame(buttonsFrame2)
         buttonsFrame3.pack(side='top', anchor='w', pady=30)
+        
         ttk.Button(buttonsFrame3, text='>>>>',
             command = Increasenum).pack(side='right')
         ttk.Button(buttonsFrame3, text='<<<<',
-            command = Decreasenum).pack(side='right')        
+            command = Decreasenum).pack(side='right')
+        
         buttons.append(ttk.Button(buttonsFrame2, text='Buy', command = BuyCow))
         buttons.append(ttk.Button(buttonsFrame2, text='Exit', command = Exit))
         for i in buttons:
             i.pack(side='right', anchor='center')
+            
+    if buttons == []:
+        createGUI()
+        
     InsideMarket()
     
     if testing:
-        for _ in range(cowsInMarket):
+        for _ in range(animalsInMarket):
             BuyCow() # buy every animal for testing ShowAnimals() function
             Increasenum()
         BuyCow() 
@@ -284,8 +326,11 @@ def ShowAnimals():
     if iterating_list==[]:
         showerror(message="You don't have a cow or bull. Buy one from market.")
         return
+    
+    # delete buttons created from previous interactions
     for j in buttonsFrame2.pack_slaves():
         j.destroy()
+        
     spacing=30
     buttons=[]
     def ShowAnimal():
@@ -293,14 +338,17 @@ def ShowAnimals():
         Text=iterating_list[i].getForShowing()
         label['text']=Text
     def Increasenum():
+        '''Show next animal'''
         nonlocal i
         i=i+1 if not i==len(iterating_list)-1 else 0
         ShowAnimal()
     def Decreasenum():
+        '''Show previous animal'''
         nonlocal i
         i=i-1 if not i==0 else len(iterating_list)-1
         ShowAnimal()
     def Exit():
+        '''Destroy buttons and go into MonthlyCycle()'''
         for j in buttonsFrame2.pack_slaves():
             j.destroy()
         MonthlyCycle()
@@ -332,8 +380,9 @@ def ShowAnimals():
         elif iterating_list[i].ispregnant:
             showinfo(message = 'This cow is already pregnant.')
         else:
-            if askyesno(title='Confirm', message='Do you want to breed this cow? It will start to lose milk\
-                after 5th month instead of 7th.'):
+            if askyesno(title='Confirm',
+                        message='Do you want to breed this cow?\
+                        It will start to lose milk after 5th month instead of 7th.'):
                 iterating_list[i].ispregnant = True
                 iterating_list[i].prgDate = current_date
                 showinfo(message='This cow is now pregnant.')
@@ -341,7 +390,6 @@ def ShowAnimals():
     def Sell():
         global money
         nonlocal i
-        print(iterating_list)
         price = iterating_list[i].getSalePrice()
         action=askyesno(title='Sell the animal',
             message='You have got offer of '
@@ -354,19 +402,26 @@ def ShowAnimals():
                 return
             i=i-1 if i else 0
         ShowAnimal()
-    if buttons == []:
+        
+    def createGUI():
         buttonsFrame3=ttk.Frame(buttonsFrame2)
         buttonsFrame3.pack(side='top', anchor='center', pady=20)
+
         ttk.Button(buttonsFrame3, text='>>>>',
             command = Increasenum).pack(side='right', padx=60)
         ttk.Button(buttonsFrame3, text='<<<<',
             command = Decreasenum).pack(side='left')
+
         buttons.append(ttk.Button(buttonsFrame2, text='Slaughter/Slay', command = Slay))
         buttons.append(ttk.Button(buttonsFrame2, text='Exit', command = Exit))
         buttons.append(ttk.Button(buttonsFrame2, text='Sell', command = Sell))
         buttons.append(ttk.Button(buttonsFrame2, text='Mate', command = Mate))
+
         for j in buttons:
             j.pack(side='right', anchor='center')
+    if buttons == []:
+        createGUI()
+            
     ShowAnimal()
     if testing:
         Increasenum()

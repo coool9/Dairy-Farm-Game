@@ -33,7 +33,7 @@ grassPrice = {'Rainy': 300,
 rainyMonths = (4,5,6,7,8) # Months in which rains
 snowyMonths = (11,12,1,2) # Months in which snows
 rainProbability = 1/3
-animalsInMarket=7            # Amount of animals availible in the market
+animalsInMarket = 7            # Amount of animals availible in the market
 
 
 # milk of a cow changes with age.
@@ -91,7 +91,7 @@ class Animal():
                 showinfo(message = 'Unfortunately, one of your '
                     + ('bulls' if self.gender=='male' else 'cows') +
                     'has died')
-        if self.gender  == 'female' and self.ispregnant:
+        if self.gender == 'female' and self.ispregnant:
             # Get no: of month in which the cow got pregnant by using `year*12+months`.
             # +9: after 9 months a calf will be born
             #if self.prgDate[0]*1+self.prgDate[1]+9 <= year*12+month:
@@ -103,12 +103,12 @@ class Animal():
                 Gender=choice(['female','male'])
                 Animal(current_date, Gender, 5)
                 showinfo(message=f'A {Gender} calf is born!')
-                
-        if self.lastCalfBornOn != date(1800, 1, 1) and\
-            ( current_date - self.lastCalfBornOn > timedelta(7*30) or
-            ( current_date - self.lastCalfBornOn > timedelta(5*30) and self.ispregnant)):
-            if self.milk > 0:
-                self.milk -= 2 if (randint(1,3) == 3 and self.milk != 1) else 1
+        if self.gender == 'female':       
+            if self.lastCalfBornOn != date(1800, 1, 1) and\
+                ( current_date - self.lastCalfBornOn > timedelta(7*30) or
+                ( current_date - self.lastCalfBornOn > timedelta(5*30) and self.ispregnant)):
+                if self.milk > 0:
+                    self.milk -= 2 if (randint(1,3) == 3 and self.milk != 1) else 1
 
     def getSalePrice(self):
         price=0
@@ -142,6 +142,7 @@ class Animal():
                 animalDict['Pregnant Date'] = str(self.prgDate)
             if self.lastCalfBornOn != date(1800, 1, 1):
                 animalDict['Last Calf'] = str(self.lastCalfBornOn)
+                
         Text=''
         spacing = 20
         
@@ -156,12 +157,6 @@ def getGrassPrice(weather):
 def getFoodRequirement(meat):
     meatFoodRelation={10:600,9:550,8:500,7:450,6:400,5:350,4:300,3:250,2:250,1:250}
 ####
-s=ttk.Style()
-Font=('Helvetica', 12)
-s.theme_settings('xpnative',
-    settings={'TButton': {'configure': {'font': Font}},
-            'TLabel': {'configure': {'font': Font}}})
-s.theme_use('xpnative')
 
 label=ttk.Label(window)
 label.pack(side='top', anchor = 'center')
@@ -430,8 +425,10 @@ def ShowAnimals():
         Sell()
         Mate()
         Exit()
-
+        
 def ChangeTheme():
+    s=ttk.Style()
+    Font=('Helvetica', 12)
     themes=s.theme_names()
     current_theme=themes.index(s.theme_use())
     current_theme=themes[current_theme+1 if current_theme != len(themes)-1 else 0]
@@ -439,6 +436,8 @@ def ChangeTheme():
                 settings={'TButton': {'configure': {'font': Font}},
                           'TLabel': {'configure': {'font': Font}}})
     s.theme_use(current_theme)
+
+ChangeTheme()
 
 buttonsFrame = ttk.Frame(window)
 buttonsFrame.pack(side='left',anchor='n', before=label)
@@ -455,8 +454,12 @@ ttk.Button(buttonsFrame,text="Quit", command = window.destroy
     ).pack(anchor='w', pady=10, padx=20)
     
 if testing:
+    print("starting tests")
     GoToMarket()
+    print("GoToMarket successfull 1/3 tests passed")
     ShowAnimals()
+    print("ShowAnimals successfull 1/3 tests passed")
     MonthlyCycle()
+    print("MonthlyCycle successfull 1/3 tests passed")
     
 window.mainloop()

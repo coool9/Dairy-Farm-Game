@@ -130,14 +130,16 @@ class Animal():
     
     def getForShowing(self):
         '''Create a dictionary'''
-        animalDict = {'BirthDay': self.birthDay,
-                'Age': self.age,
+        animalDict = {
+                'BirthDay': self.birthDay,
+                'Age': str(self.age[0])+' years ' + str(self.age[1])+' months',
                 'Gender': self.gender,
                 'Meat': self.meat,
-                'Price': self.getSalePrice()}
+                'Price': self.getSalePrice()
+        }
         if self.gender == 'female':
             animalDict['Milk'] = self.milk
-            animalDict['IsPregnant'] = self.ispregnant
+            animalDict['Pregnancy'] = self.ispregnant
             if self.ispregnant:
                 animalDict['Pregnant Date'] = str(self.prgDate)
             if self.lastCalfBornOn != date(1800, 1, 1):
@@ -366,8 +368,9 @@ def ShowAnimals():
             ispassing = False
             if j.gender == 'male':
                 ispassing=True
-            if ispassing:
-                showerror(message = "You don't have a bull buy one from market.")
+        if ispassing == False:
+            showerror(message = "You don't have a bull buy one from market.")
+            return
         if iterating_list[i].gender == 'male':
             showerror(message = "You can't mate a bull with a bull.")
         elif iterating_list[i].age <= [0, 9]:
